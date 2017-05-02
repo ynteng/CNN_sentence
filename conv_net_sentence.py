@@ -175,8 +175,20 @@ def train_conv_net(datasets,
         train_losses = [test_model(i) for i in xrange(n_train_batches)]
         train_perf = 1 - np.mean(train_losses)
         val_losses = [val_model(i) for i in xrange(n_val_batches)]
-        val_perf = 1- np.mean(val_losses)                        
-        print('epoch: %i, training time: %.2f secs, train perf: %.2f %%, val perf: %.2f %%' % (epoch, time.time()-start_time, train_perf * 100., val_perf*100.))
+        val_perf = 1- np.mean(val_losses)                       
+
+        """ 
+        calculate the loss for training and testing data
+        """
+        train_sse_loss = 0;
+        for temp_i in train_losses:
+        	train_sse_loss += (temp_i - np.mean(train_losses) )**2;
+
+        val_sse_loss = 0;
+        for temp_i in val_losses:
+        	val_sse_loss += (temp_i - np.mean(val_losses) )**2;
+
+        print('epoch: %i, training time: %.2f secs, train perf: %.2f %%, train loss: %.2f, val perf: %.2f %%, val loss: %.2f' % (epoch, time.time()-start_time, train_perf * 100., train_sse_loss, val_perf*100., val_sse_loss))
         if val_perf >= best_val_perf:
             best_val_perf = val_perf
             test_loss = test_model_all(test_set_x,test_set_y)        
@@ -287,7 +299,7 @@ def make_idx_data_cv(revs, word_idx_map, cv, max_l=51, k=300, filter_h=5):
 if __name__=="__main__":
     print "loading data...",
     x = cPickle.load(open("mr.p","rb"))
-    revs, W, W2, word_idx_map, vocab = x[0], x[1], x[2], x[3], x[4]
+    revs, W, W2, word_idx_map, vocab, max_l = x[0], x[1], x[2], x[3], x[4], x[5]
     print "data loaded!"
     mode= sys.argv[1]
     word_vectors = sys.argv[2]    
@@ -307,7 +319,7 @@ if __name__=="__main__":
     results = []
     r = range(0,10)    
     for i in r:
-        datasets = make_idx_data_cv(revs, word_idx_map, i, max_l=56,k=300, filter_h=5)
+        datasets = make_idx_data_cv(revs, word_idx_map, i, max_l=max_l, k=300, filter_h=5)
         perf = train_conv_net(datasets,
                               U,
                               lr_decay=0.95,
